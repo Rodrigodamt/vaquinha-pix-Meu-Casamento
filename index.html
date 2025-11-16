@@ -6,6 +6,7 @@
     <title>Nosso Grande Dia</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -57,31 +58,24 @@
             background-color: #218838;
             transform: scale(1.05);
         }
-        .copy-btn {
-            background-color: #007bff;
-        }
-        .copy-btn:hover {
-            background-color: #0056b3;
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
-        }
-        .whatsapp-btn:hover {
-            background-color: #1DA851;
-        }
-        #qrcode {
-            margin-top: 20px;
-        }
+        .copy-btn { background-color: #007bff; }
+        .copy-btn:hover { background-color: #0056b3; }
+        .whatsapp-btn { background-color: #25D366; }
+        .whatsapp-btn:hover { background-color: #1DA851; }
+        #qrcode { margin-top: 20px; }
     </style>
 </head>
+
 <body>
     <img src="foto.jpg?v=1" alt="Foto do casal">
 
     <div class="card">
         <h1>Nosso Grande Dia 💍</h1>
-        <p>Estamos prestes a realizar um sonho: oficializar nossa união!<br>
-        Cada contribuição é um gesto de carinho que nos ajuda a dar este passo tão especial.<br>
-        Escolha um valor e faça parte da nossa história. Obrigado por caminhar conosco!</p>
+        <p>
+            Estamos prestes a realizar um sonho: oficializar nossa união!<br>
+            Cada contribuição é um gesto de carinho que nos ajuda a dar este passo tão especial.<br>
+            Escolha um valor e faça parte da nossa história. Obrigado por caminhar conosco!
+        </p>
 
         <button class="btn" onclick="gerarQRCode(10)">Contribuir R$10</button>
         <button class="btn" onclick="gerarQRCode(20)">Contribuir R$20</button>
@@ -96,59 +90,70 @@
     </div>
 
     <script>
-        const pixKey = document.getElementById('pixKey').textContent;
-        const pageLink = window.location.href;
+        // === CONFIGURAÇÃO ===
+        const pixKey = document.getElementById("pixKey").textContent;
+        const nomeRecebedor = "RODRIGO BATISTA";
+        const cidadeRecebedor = "RIODEJANEIRO";
 
+        // === CÁLCULO CRC16 OFICIAL BACEN ===
         function crc16(payload) {
             let crc = 0xFFFF;
             for (let i = 0; i < payload.length; i++) {
                 crc ^= payload.charCodeAt(i) << 8;
                 for (let j = 0; j < 8; j++) {
-                    if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
-                    else crc <<= 1;
+                    crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
                     crc &= 0xFFFF;
                 }
             }
-            return crc.toString(16).toUpperCase().padStart(4, '0');
+            return crc.toString(16).toUpperCase().padStart(4, "0");
         }
 
+        // === GERADOR DE PIX COPIA E COLA ===
         function gerarPayload(valor) {
             const valorFormatado = valor.toFixed(2);
 
             const gui = "BR.GOV.BCB.PIX";
-            const nome = "Nosso Grande Dia";
-            const cidade = "SaoPaulo";
+            const campoChave = `01${pixKey.length.toString().padStart(2, "0")}${pixKey}`; 
+            const merchantAccountInfo = `26${(4 + gui.length + campoChave.length).toString().padStart(2, "0")}00${gui.length.toString().padStart(2, "0")}${gui}${campoChave}`;
 
-            const pixKeyField = `01${pixKey.length.toString().padStart(2, '0')}${pixKey}`;
-            const merchantInfo = `26${(4 + gui.length + pixKeyField.length).toString().padStart(2, '0')}00${gui.length.toString().padStart(2, '0')}${gui}${pixKeyField}`;
+            const valorField = `54${valorFormatado.length.toString().padStart(2, "0")}${valorFormatado}`;
+            const nomeField = `59${nomeRecebedor.length.toString().padStart(2, "0")}${nomeRecebedor}`;
+            const cidadeField = `60${cidadeRecebedor.length.toString().padStart(2, "0")}${cidadeRecebedor}`;
 
-            const valorField = `54${valorFormatado.length.toString().padStart(2, '0')}${valorFormatado}`;
+            let payload =
+                "000201" +
+                merchantAccountInfo +
+                "52040000" +
+                "5303986" +
+                valorField +
+                "58" + "02" + "BR" +
+                nomeField +
+                cidadeField +
+                "62070503***" +
+                "6304";
 
-            let payload = "000201" + merchantInfo + "52040000" + "5303986" + valorField + `58${"BR".length.toString().padStart(2,'0')}BR` + `59${nome.length.toString().padStart(2,'0')}${nome}` + `60${cidade.length.toString().padStart(2,'0')}${cidade}` + "62070503***" + "6304";
-
-            const crc = crc16(payload);
-            return payload + crc;
+            return payload + crc16(payload);
         }
 
+        // === QR CODE ===
         function gerarQRCode(valor) {
             const payload = gerarPayload(valor);
-
             window.ultimoPayload = payload;
 
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), {
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
                 text: payload,
-                width: 200,
-                height: 200
+                width: 220,
+                height: 220
             });
 
-            if (!document.getElementById('copyPayloadBtn')) {
-                const btn = document.createElement('button');
-                btn.id = 'copyPayloadBtn';
-                btn.className = 'btn copy-btn';
-                btn.textContent = 'Copiar Pix com Valor';
+            if (!document.getElementById("copyPayloadBtn")) {
+                const btn = document.createElement("button");
+                btn.id = "copyPayloadBtn";
+                btn.className = "btn copy-btn";
+                btn.textContent = "Copiar Pix com Valor";
                 btn.onclick = copiarPayload;
-                document.querySelector('.card').appendChild(btn);
+                document.querySelector(".card").appendChild(btn);
             }
         }
 
@@ -164,17 +169,15 @@
             alert("Chave Pix copiada!");
         }
 
-        function compartilharWhatsApp(){
-    const mensagem = `Olá, amigos! 😊
+        // === WHATSAPP CORRIGIDO ===
+        function compartilharWhatsApp() {
+            const mensagem = `Olá, amigos! 😊
 Criamos esta página com muito carinho para reunir uma ajuda simbólica e conseguirmos realizar nosso sonho: oficializar nossa união e obter nosso documento de casamento. 💍✨
 Se você quiser fazer parte desse momento especial, é só acessar o link abaixo.
 Agradecemos de coração pelo carinho e apoio! ❤️`;
-    const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
-    window.open(url, '_blank');
-}`;
-    window.open(url, '_blank');
-}`;
-            window.open(url, '_blank');
+
+            const url = "https://wa.me/?text=" + encodeURIComponent(mensagem);
+            window.open(url, "_blank");
         }
     </script>
 </body>

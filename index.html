@@ -100,13 +100,33 @@
         const pageLink = window.location.href;
 
         function gerarQRCode(valor) {
-            const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valor.toFixed(2)}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;
+            const valorFormatado = valor.toFixed(2);
+            const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valorFormatado}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;
+
+            window.ultimoPayload = payload;
+
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById('qrcode'), {
                 text: payload,
                 width: 200,
                 height: 200
             });
+
+            if (!document.getElementById('copyPayloadBtn')) {
+                const btn = document.createElement('button');
+                btn.id = 'copyPayloadBtn';
+                btn.className = 'btn copy-btn';
+                btn.textContent = 'Copiar Pix com Valor';
+                btn.onclick = copiarPayload;
+                document.querySelector('.card').appendChild(btn);
+            }
+        }
+
+        function copiarPayload() {
+            if (window.ultimoPayload) {
+                navigator.clipboard.writeText(window.ultimoPayload);
+                alert("Pix com valor copiado!");
+            }
         }
 
         function copiarPix() {

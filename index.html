@@ -6,6 +6,7 @@
     <title>Nosso Grande Dia</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -57,24 +58,15 @@
             background-color: #218838;
             transform: scale(1.05);
         }
-        .copy-btn {
-            background-color: #007bff;
-        }
-        .copy-btn:hover {
-            background-color: #0056b3;
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
-        }
-        .whatsapp-btn:hover {
-            background-color: #1DA851;
-        }
-        #qrcode {
-            margin-top: 20px;
-        }
+        .copy-btn { background-color: #007bff; }
+        .copy-btn:hover { background-color: #0056b3; }
+        .whatsapp-btn { background-color: #25D366; }
+        .whatsapp-btn:hover { background-color: #1DA851; }
+        #qrcode { margin-top: 20px; }
     </style>
 </head>
 <body>
+
     <img src="foto.jpg?v=1" alt="Foto do casal">
 
     <div class="card">
@@ -95,53 +87,87 @@
         <div id="qrcode"></div>
     </div>
 
+    <!-- Script colocado aqui, após os elementos do DOM -->
     <script>
-        const pixKey = document.getElementById('pixKey').textContent;
-        const pageLink = window.location.href;
+        // normalize Pix key and basic config
+        const pixKeyRaw = document.getElementById('pixKey').textContent || '';
+        const pixKey = pixKeyRaw.replace(/\D/g, ''); // ex: 21982251790
+        const merchantName = 'Nosso Grande Dia';
+        const merchantCity = 'SaoPaulo';
+        let ultimoPayload = null;
 
+        function pad2(n){ return String(n).padStart(2,'0'); }
+
+        // CRC16 (polynomial 0x1021) for EMV QR
         function crc16(payload) {
             let crc = 0xFFFF;
             for (let i = 0; i < payload.length; i++) {
                 crc ^= payload.charCodeAt(i) << 8;
                 for (let j = 0; j < 8; j++) {
-                    if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
-                    else crc <<= 1;
-                    crc &= 0xFFFF;
+                    if ((crc & 0x8000) !== 0) crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+                    else crc = (crc << 1) & 0xFFFF;
                 }
             }
             return crc.toString(16).toUpperCase().padStart(4, '0');
         }
 
-        function gerarPayload(valor) {
-            const valorFormatado = valor.toFixed(2);
-
-            const gui = "BR.GOV.BCB.PIX";
-            const nome = "Nosso Grande Dia";
-            const cidade = "SaoPaulo";
-
-            const pixKeyField = `01${pixKey.length.toString().padStart(2, '0')}${pixKey}`;
-            const merchantInfo = `26${(4 + gui.length + pixKeyField.length).toString().padStart(2, '0')}00${gui.length.toString().padStart(2, '0')}${gui}${pixKeyField}`;
-
-            const valorField = `54${valorFormatado.length.toString().padStart(2, '0')}${valorFormatado}`;
-
-            let payload = "000201" + merchantInfo + "52040000" + "5303986" + valorField + `58${"BR".length.toString().padStart(2,'0')}BR` + `59${nome.length.toString().padStart(2,'0')}${nome}` + `60${cidade.length.toString().padStart(2,'0')}${cidade}` + "62070503***" + "6304";
-
-            const crc = crc16(payload);
-            return payload + crc;
+        // helper for EMV tags: id + len(2) + value
+        function tag(id, value){
+            const v = String(value);
+            return id + pad2(v.length) + v;
         }
 
-        function gerarQRCode(valor) {
-            const payload = gerarPayload(valor);
+        // Build EMV-Co Pix payload (official)
+        function gerarPayloadPIX(amount){
+            const amountStr = (typeof amount === 'number' && !isNaN(amount)) ? amount.toFixed(2) : '';
 
-            window.ultimoPayload = payload;
+            // 00 - Payload Format Indicator
+            let payload = tag('00','01');
 
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), {
-                text: payload,
-                width: 200,
-                height: 200
-            });
+            // 26 - Merchant Account Information (BR.GOV.BCB.PIX)
+            const gui = 'BR.GOV.BCB.PIX';
+            const sub00 = tag('00', gui); // GUI
+            const sub01 = '01' + pad2(pixKey.length) + pixKey; // chave Pix inside subfield 01
+            const merchantAccount = sub00 + sub01;
+            payload += '26' + pad2(merchantAccount.length) + merchantAccount;
 
+            // 52 - Merchant Category Code
+            payload += tag('52','0000');
+            // 53 - Transaction Currency (986 = BRL)
+            payload += tag('53','986');
+            // 54 - Transaction amount (optional)
+            if (amountStr) payload += '54' + pad2(amountStr.length) + amountStr;
+            // 58 - Country
+            payload += tag('58','BR');
+            // 59 - Merchant name
+            payload += tag('59', merchantName);
+            // 60 - Merchant city
+            payload += tag('60', merchantCity);
+
+            // 62 - Additional data field template (txid)
+            const txid = '***';
+            const sub05 = '05' + pad2(txid.length) + txid;
+            payload += '62' + pad2(sub05.length) + sub05;
+
+            // Add CRC (tag 63) — calculate over payload + '6304'
+            const payloadForCrc = payload + '6304';
+            const crc = crc16(payloadForCrc);
+            payload += '63' + '04' + crc;
+
+            return payload;
+        }
+
+        // generate QR and show 'copy payload' button
+        function gerarQRCode(valor){
+            const num = Number(valor);
+            const payload = gerarPayloadPIX(num);
+            ultimoPayload = payload;
+
+            const el = document.getElementById('qrcode');
+            el.innerHTML = '';
+            new QRCode(el, { text: payload, width: 200, height: 200 });
+
+            // create copy button if not already present
             if (!document.getElementById('copyPayloadBtn')) {
                 const btn = document.createElement('button');
                 btn.id = 'copyPayloadBtn';
@@ -152,27 +178,25 @@
             }
         }
 
-        function copiarPayload() {
-            if (window.ultimoPayload) {
-                navigator.clipboard.writeText(window.ultimoPayload);
-                alert("Pix com valor copiado!");
-            }
+        function copiarPayload(){
+            if (!ultimoPayload) return alert('Nenhum Pix gerado ainda.');
+            navigator.clipboard.writeText(ultimoPayload).then(()=>{
+                alert('Pix Copia e Cola copiado!');
+            }).catch(()=>{
+                prompt('Copie manualmente:', ultimoPayload);
+            });
         }
 
-        function copiarPix() {
+        function copiarPix(){
             navigator.clipboard.writeText(pixKey);
-            alert("Chave Pix copiada!");
+            alert('Chave Pix copiada!');
         }
 
         function compartilharWhatsApp(){
-    const mensagem = `Olá, amigos! 😊
-Criamos esta página com muito carinho para reunir uma ajuda simbólica e conseguirmos realizar nosso sonho: oficializar nossa união e obter nosso documento de casamento. 💍✨
-Se você quiser fazer parte desse momento especial, é só acessar o link abaixo.
-Agradecemos de coração pelo carinho e apoio! ❤️`;
-    const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
-    window.open(url, '_blank');
-}`;
-            window.open(url, '_blank');
+            const pageLink = window.location.href;
+            const mensagem = `Olá, amigos! 😊\nCriamos esta página com muito carinho para reunir uma ajuda simbólica e conseguirmos realizar nosso sonho: oficializar nossa união e obter nosso documento de casamento. 💍✨\nSe você quiser fazer parte desse momento especial, é só acessar o link abaixo.\nAgradecemos de coração pelo carinho e apoio! ❤️\n\n${pageLink}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+            window.open(url,'_blank');
         }
     </script>
 </body>

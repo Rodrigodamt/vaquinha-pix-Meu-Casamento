@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nosso Grande Dia</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins0&display=swap
+    https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -12,7 +12,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -21,7 +20,7 @@
             width: 180px;
             border-radius: 12px;
             margin-bottom: 20px;
-           -shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .card {
             background: #fff;
@@ -93,7 +92,7 @@
         <div id="qrcode"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs.0/qrcode.min.js</script>
+    <script src="https://cdnjs.cloudflares/qrcodejs/1.0.0/qrcode.min.js</script>
     <script>
         const pixKey = document.getElementById('pixKey').textContent;
         const pageLink = "https://rodrigodamt.github.io/vaquinha-pix-Meu-Casamento/";

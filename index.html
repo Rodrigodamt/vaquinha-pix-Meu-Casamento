@@ -6,6 +6,7 @@
     <title>Nosso Grande Dia</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -57,24 +58,15 @@
             background-color: #218838;
             transform: scale(1.05);
         }
-        .copy-btn {
-            background-color: #007bff;
-        }
-        .copy-btn:hover {
-            background-color: #0056b3;
-        }
-        .whatsapp-btn {
-            background-color: #25D366;
-        }
-        .whatsapp-btn:hover {
-            background-color: #1DA851;
-        }
-        #qrcode {
-            margin-top: 20px;
-        }
+        .copy-btn { background-color: #007bff; }
+        .copy-btn:hover { background-color: #0056b3; }
+        .whatsapp-btn { background-color: #25D366; }
+        .whatsapp-btn:hover { background-color: #1DA851; }
+        #qrcode { margin-top: 20px; }
     </style>
 </head>
 <body>
+
     <img src="foto.jpg?v=1" alt="Foto do casal">
 
     <div class="card">
@@ -95,55 +87,115 @@
         <div id="qrcode"></div>
     </div>
 
-    <script>
-        const pixKey = document.getElementById('pixKey').textContent;
-        const pageLink = window.location.href;
+<script>
+// ===============================
+// CONFIGURAÇÕES
+// ===============================
+const rawPixKey = "(21) 982251790";
+const pixKey = rawPixKey.replace(/\D/g, '');
+const merchantName = "Nosso Grande Dia";
+const merchantCity = "SaoPaulo";
+let ultimoPayload = null;
 
-        function gerarQRCode(valor) {
-            const valorFormatado = valor.toFixed(2);
-            const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valorFormatado}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;
+// ===============================
+// FUNÇÕES DE SUPORTE
+// ===============================
+function pad2(n){ return String(n).padStart(2,'0'); }
 
-            window.ultimoPayload = payload;
-
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), {
-                text: payload,
-                width: 200,
-                height: 200
-            });
-
-            if (!document.getElementById('copyPayloadBtn')) {
-                const btn = document.createElement('button');
-                btn.id = 'copyPayloadBtn';
-                btn.className = 'btn copy-btn';
-                btn.textContent = 'Copiar Pix com Valor';
-                btn.onclick = copiarPayload;
-                document.querySelector('.card').appendChild(btn);
-            }
+function crc16(payload){
+    let crc = 0xFFFF;
+    for (let i = 0; i < payload.length; i++) {
+        crc ^= payload.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+            if ((crc & 0x8000) !== 0) crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+            else crc = (crc << 1) & 0xFFFF;
         }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, '0');
+}
 
-        function copiarPayload() {
-            if (window.ultimoPayload) {
-                navigator.clipboard.writeText(window.ultimoPayload);
-                alert("Pix com valor copiado!");
-            }
-        }
+function tag(id, value){ return id + pad2(String(value).length) + String(value); }
 
-        function copiarPix() {
-            navigator.clipboard.writeText(pixKey);
-            alert("Chave Pix copiada!");
-        }
+// ===============================
+// GERA PAYLOAD PIX OFICIAL
+// ===============================
+function gerarPayloadPIX(amount){
+    const amountStr = amount ? Number(amount).toFixed(2) : '';
 
-        function compartilharWhatsApp() {
-            const mensagem = `Olá! 😊 Estamos prestes a realizar nosso grande dia! 💍
+    let payload = '';
+    payload += tag('00','01');
+
+    const gui = 'BR.GOV.BCB.PIX';
+    const sub00 = tag('00', gui);
+    const sub01 = '01' + pad2(pixKey.length) + pixKey;
+    const merchantAccount = sub00 + sub01;
+    payload += '26' + pad2(merchantAccount.length) + merchantAccount;
+
+    payload += tag('52','0000');
+    payload += tag('53','986');
+
+    if(amountStr){ payload += tag('54', amountStr); }
+
+    payload += tag('58','BR');
+    payload += tag('59', merchantName);
+    payload += tag('60', merchantCity);
+
+    const txid = '***';
+    const adf = '05' + pad2(txid.length) + txid;
+    payload += '62' + pad2(adf.length) + adf;
+
+    const toCRC = payload + '6304';
+    const crc = crc16(toCRC);
+    payload += '63' + '04' + crc;
+
+    return payload;
+}
+
+// ===============================
+// QR CODE + BOTÕES
+// ===============================
+function gerarQRCode(valor){
+    const payload = gerarPayloadPIX(valor);
+    ultimoPayload = payload;
+
+    const el = document.getElementById('qrcode');
+    el.innerHTML = '';
+    new QRCode(el, { text: payload, width: 200, height: 200 });
+
+    if (!document.getElementById('copyPayloadBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'copyPayloadBtn';
+        btn.className = 'btn copy-btn';
+        btn.textContent = 'Copiar Pix com Valor';
+        btn.onclick = copiarPayload;
+        document.querySelector('.card').appendChild(btn);
+    }
+}
+
+function copiarPayload(){
+    if (!ultimoPayload) return alert('Nenhum Pix gerado ainda.');
+    navigator.clipboard.writeText(ultimoPayload)
+        .then(()=> alert('Pix Copia e Cola copiado!'))
+        .catch(()=> prompt('Copie manualmente:', ultimoPayload));
+}
+
+function copiarPix(){
+    navigator.clipboard.writeText(pixKey);
+    alert('Chave Pix copiada!');
+}
+
+function compartilharWhatsApp(){
+    const mensagem = `Olá! 😊 Estamos prestes a realizar nosso grande dia! 💍
 
 Quer contribuir para nossa união?
-Acesse: ${pageLink}
+Acesse nossa página!
 
 Obrigado pelo carinho! ❤️`;
-            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
-            window.open(url, '_blank');
-        }
-    </script>
+
+    const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank');
+}
+</script>
+
 </body>
 </html>

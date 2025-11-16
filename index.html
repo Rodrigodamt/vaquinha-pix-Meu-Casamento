@@ -15,14 +15,15 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-                   width: 180px;
+            padding: 20px;
+        }
+        img {
+            width: 180px;
             border-radius: 12px;
             margin-bottom: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
-        .card {
-            background: #fff;
-            padding: 25px;
+        padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             text-align: center;
@@ -93,7 +94,7 @@
     https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js</script>
     <script>
         const pixKey = document.getElementById('pixKey').textContent;
-        const pageLink = "https://SEU-LINK-GITHUB-PAGES"; // Substitua pelo link real
+        const pageLink = "https://rodrigodamt.github.io/vaquinha-pix---Meu-Casamento/";
 
         function gerarQRCode(valor) {
             const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valor.toFixed(2)}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;

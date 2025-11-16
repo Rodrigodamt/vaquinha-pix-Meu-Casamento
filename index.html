@@ -99,9 +99,39 @@
         const pixKey = document.getElementById('pixKey').textContent;
         const pageLink = window.location.href;
 
-        function gerarQRCode(valor) {
+        function crc16(payload) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= payload.charCodeAt(i) << 8;
+                for (let j = 0; j < 8; j++) {
+                    if (crc & 0x8000) crc = (crc << 1) ^ 0x1021;
+                    else crc <<= 1;
+                    crc &= 0xFFFF;
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function gerarPayload(valor) {
             const valorFormatado = valor.toFixed(2);
-            const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valorFormatado}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;
+
+            const gui = "BR.GOV.BCB.PIX";
+            const nome = "Nosso Grande Dia";
+            const cidade = "SaoPaulo";
+
+            const pixKeyField = `01${pixKey.length.toString().padStart(2, '0')}${pixKey}`;
+            const merchantInfo = `26${(4 + gui.length + pixKeyField.length).toString().padStart(2, '0')}00${gui.length.toString().padStart(2, '0')}${gui}${pixKeyField}`;
+
+            const valorField = `54${valorFormatado.length.toString().padStart(2, '0')}${valorFormatado}`;
+
+            let payload = "000201" + merchantInfo + "52040000" + "5303986" + valorField + `58${"BR".length.toString().padStart(2,'0')}BR` + `59${nome.length.toString().padStart(2,'0')}${nome}` + `60${cidade.length.toString().padStart(2,'0')}${cidade}` + "62070503***" + "6304";
+
+            const crc = crc16(payload);
+            return payload + crc;
+        }
+
+        function gerarQRCode(valor) {
+            const payload = gerarPayload(valor);
 
             window.ultimoPayload = payload;
 
@@ -134,12 +164,14 @@
             alert("Chave Pix copiada!");
         }
 
-        function compartilharWhatsApp() {
-            const mensagem = `Olá, amigos! 😊
+        function compartilharWhatsApp(){
+    const mensagem = `Olá, amigos! 😊
 Criamos esta página com muito carinho para reunir uma ajuda simbólica e conseguirmos realizar nosso sonho: oficializar nossa união e obter nosso documento de casamento. 💍✨
 Se você quiser fazer parte desse momento especial, é só acessar o link abaixo.
-Agradecemos de coração pelo carinho e apoio! ❤️`;;
-            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+Agradecemos de coração pelo carinho e apoio! ❤️`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank');
+}`;
             window.open(url, '_blank');
         }
     </script>

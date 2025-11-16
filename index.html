@@ -3,113 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vaquinha do Casamento</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f4f6f9;
-            color: #333;
+    <title>Nosso Grande Dia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="  body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8, #e6f7ff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
             margin: 0;
-            padding: 0;
         }
-        header img {
-            width: 100%;
-            max-height: 300px;
-            object-fit: cover;
-        }
-        .container {
-            max-width: 700px;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
+        img {
+            width: 180px;
             border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+           10px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             text-align: center;
+            max-width: 400px;
+            width: 90%;
         }
         h1 {
-            color: #4CAF50;
+            color: #28a745;
+            font-size: 1.8rem;
             margin-bottom: 10px;
         }
         p {
-            font-size: 18px;
+            color: #555;
+            font-size: 1rem;
             margin-bottom: 20px;
-            line-height: 1.6;
         }
         .btn {
-            display: inline-block;
-            margin: 10px;
-            padding: 12px 24px;
-            background: #4CAF50;
-            color: white;
+            background-color: #28a745;
+            color: #fff;
             border: none;
-            border-radius: 6px;
+            padding: 12px 20px;
+            margin: 8px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            transition: background 0.3s;
+            transition: transform 0.2s, background-color 0.3s;
         }
         .btn:hover {
-            background: #45a049;
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+        .copy-btn {
+            background-color: #007bff;
+        }
+        .copy-btn:hover {
+            background-color: #0056b3;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+        }
+        .whatsapp-btn:hover {
+            background-color: #1DA851;
         }
         #qrcode {
             margin-top: 20px;
         }
-        .pix-key {
-            margin-top: 15px;
-            font-size: 16px;
-            color: #333;
-        }
-        .copy-btn {
-            margin-top: 10px;
-            background: #2196F3;
-        }
     </style>
 </head>
 <body>
-    <header>
-        foto.jpg
-    </header>
-    <div class="container">
+    foto.jpg
+    <div class="card">
         <h1>Nosso Grande Dia 💍</h1>
-        <p>
-            Estamos prestes a realizar um sonho: oficializar nossa união!<br>
-            Cada contribuição é um gesto de carinho que nos ajuda a dar este passo tão especial.<br>
-            Escolha um valor e faça parte da nossa história. Obrigado por caminhar conosco!
-        </p>
+        <p>Estamos prestes a realizar um sonho: oficializar nossa união!<br>
+        Cada contribuição é um gesto de carinho que nos ajuda a dar este passo tão especial.<br>
+        Escolha um valor e faça parte da nossa história. Obrigado por caminhar conosco!</p>
 
         <button class="btn" onclick="gerarQRCode(10)">Contribuir R$10</button>
         <button class="btn" onclick="gerarQRCode(20)">Contribuir R$20</button>
         <button class="btn" onclick="gerarQRCode(30)">Contribuir R$30</button>
 
-        <div id="qrcode"></div>
-        <div class="pix-key">Chave Pix: <span id="pixKey">c0f3cecb-5c67-450a-87de-29fc6add6cae</span></div>
+        <p>Chave Pix: <span id="pixKey">cf03cecb-5c67-450a-87de-29fc6add6cae</span></p>
         <button class="btn copy-btn" onclick="copiarPix()">Copiar Chave Pix</button>
+        <button class="btn whatsapp-btn" onclick="compartilharWhatsApp()">Compartilhar no WhatsApp</button>
+
+        <div id="qrcode"></div>
     </div>
 
     https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js</script>
     <script>
-        const chavePix = "c0f3cecb-5c67-450a-87de-29fc6add6cae";
-        const nomeRecebedor = "Rodrigo e Cris";
-        const cidade = "RIO";
+        const pixKey = document.getElementById('pixKey').textContent;
+        const pageLink = "https://SEU-LINK-GITHUB-PAGES"; // Substitua pelo link real
 
         function gerarQRCode(valor) {
-            document.getElementById("qrcode").innerHTML = "";
-            const payload = gerarPayloadPix(chavePix, valor, nomeRecebedor, cidade);
-            new QRCode(document.getElementById("qrcode"), {
+            const payload = `00020126360014BR.GOV.BCB.PIX0114${pixKey}520400005303986540${valor.toFixed(2)}5802BR5925Nosso Grande Dia6009SaoPaulo62070503***6304ABCD`;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), {
                 text: payload,
                 width: 200,
                 height: 200
             });
         }
 
-        function gerarPayloadPix(chave, valor, nome, cidade) {
-            return `00020126360014BR.GOV.BCB.PIX0114${chave}520400005303986540${valor.toFixed(2)}5802BR5913${nome}6003${cidade}62070503***6304ABCD`;
+        function copiarPix() {
+            navigator.clipboard.writeText(pixKey);
+            alert("Chave Pix copiada!");
         }
 
-        function copiarPix() {
-            const pixKey = document.getElementById("pixKey").innerText;
-            navigator.clipboard.writeText(pixKey).then(() => {
-                alert("Chave Pix copiada!");
-            });
+        function compartilharWhatsApp() {
+            const mensagem = `Olá! 😊 Estamos prestes a realizar nosso grande dia! 💍\n\nQuer contribuir para nossa união?\nAcesse: ${pageLink}\n\nObrigado pelo carinho! ❤️`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
         }
     </script>
 </body>

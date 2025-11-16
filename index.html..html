@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaquinha do Casamento</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+        .pix-key {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+        .copy-btn {
+            margin-top: 10px;
+            background: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="foto.jpg" alt="Fotoiv class="container">
+        <h1>Nosso Grande Dia</h1>
+        <p>Estamos prestes a realizar um sonho: oficializar nossa união! 💍<br>
+        Cada contribuição é um gesto de carinho que nos ajuda a dar este passo tão especial.<br>
+        Escolha um valor e faça parte da nossa história!</p>
+
+        <button class="btn" onclick="gerarQRCode(10)">Contribuir R$10</button>
+        <button class="btn" onclick="gerarQRCode(20)">Contribuir R$20</button>
+        <button class="btn" onclick="gerarQRCode(30)">Contribuir R$30</button>
+
+        <div id="qrcode"></div>
+        <div class="pix-key">Chave Pix: <span id="pixKey">c0f3cecb-5c67-450a-87de-29fc6add6cae</span></div>
+        <button class="btn copy-btn" onclick="copiarPix()">Copiar Chave Pix</button>
+    </div>
+
+    https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js</script>
+    <script>
+        const chavePix = "c0f3cecb-5c67-450a-87de-29fc6add6cae";
+        const nomeRecebedor = "Rodrigo e Cris";
+        const cidade = "RIO";
+
+        function gerarQRCode(valor) {
+            document.getElementById("qrcode").innerHTML = "";
+            const payload = gerarPayloadPix(chavePix, valor, nomeRecebedor, cidade);
+            new QRCode(document.getElementById("qrcode"), {
+                text: payload,
+                width: 200,
+                height: 200
+            });
+        }
+
+        function gerarPayloadPix(chave, valor, nome, cidade) {
+            return `00020126360014BR.GOV.BCB.PIX0114${chave}520400005303986540${valor.toFixed(2)}5802BR5913${nome}6003${cidade}62070503***6304ABCD`;
+        }
+
+        function copiarPix() {
+            const pixKey = document.getElementById("pixKey").innerText;
+            navigator.clipboard.writeText(pixKey).then(() => {
+                alert("Chave Pix copiada!");
+            });
+        }
+    </script>
+</body>
+</html>
